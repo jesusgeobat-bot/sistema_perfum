@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfumes — Mi Tienda</title>
+<style>
+  :root {
+    --bg: #FAF9F6;
+    --bg2: #F2F0EB;
+    --bg3: #E8E5DE;
+    --card: #FFFFFF;
+    --border: #E0DDD6;
+    --border2: #C8C4BB;
+    --text: #1A1916;
+    --text2: #6B6860;
+    --text3: #9B9890;
+    --purple: #534AB7;
+    --purple-bg: #EEEDFE;
+    --purple-text: #3C3489;
+    --green: #3B6D11;
+    --green-bg: #EAF3DE;
+    --red: #791F1F;
+    --red-bg: #FCEBEB;
+    --amber: #854F0B;
+    --amber-bg: #FAEEDA;
+    --wa: #25D366;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
+
+  /* NAV */
+  .nav { position: sticky; top: 0; z-index: 100; background: var(--card); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn { flex-shrink: 0; padding: 14px 18px; font-size: 13px; font-weight: 500; color: var(--text2); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+  .nav-btn.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+  /* SYNC BAR */
+  .sync-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--card); border-bottom: 1px solid var(--border); font-size: 12px; }
+  .sync-pill { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-weight: 500; border: 1px solid; cursor: pointer; }
+  .sync-online { background: var(--green-bg); border-color: #97C459; color: var(--green); }
+  .sync-offline { background: var(--amber-bg); border-color: #EF9F27; color: var(--amber); }
+  .sync-syncing { background: #E6F1FB; border-color: #85B7EB; color: #0C447C; }
+  .sync-error { background: var(--red-bg); border-color: #F09595; color: var(--red); }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-green { background: var(--green); }
+  .dot-amber { background: var(--amber); }
+  .dot-blue { background: #378ADD; }
+  .dot-red { background: var(--red); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .spin { animation: spin .8s linear infinite; }
+  .pulse-dot { animation: pulse 1.2s ease-in-out infinite; }
+  .pending-badge { background: var(--amber-bg); color: var(--amber); border-radius: 99px; padding: 2px 8px; font-weight: 500; }
+
+  /* SECTIONS */
+  .sec { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .sec.on { display: block; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+
+  /* FORMS */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  input, select, textarea { font-size: 14px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); width: 100%; outline: none; transition: border .15s; }
+  input:focus, select:focus, textarea:focus { border-color: var(--purple); background: var(--card); }
+  textarea { resize: none; height: 70px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .full { grid-column: 1 / -1; }
+
+  /* BUTTONS */
+  .btn { padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border2); font-size: 13px; font-weight: 500; cursor: pointer; background: var(--card); color: var(--text); transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { background: var(--bg2); }
+  .btn-purple { background: var(--purple-bg); border-color: #AFA9EC; color: var(--purple-text); }
+  .btn-purple:hover { background: #DDDAFB; }
+  .btn-green { background: var(--green-bg); border-color: #97C459; color: var(--green); }
+  .btn-red { background: var(--red-bg); border-color: #F09595; color: var(--red); }
+  .btn-wa { background: var(--wa); border-color: #1ebe5a; color: #fff; width: 100%; justify-content: center; padding: 12px; font-size: 14px; }
+  .btn-wa:hover { background: #1ebe5a; }
+  .btn-block { width: 100%; justify-content: center; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--bg2); border-radius: var(--radius-sm); padding: 12px; }
+  .stat-lbl { font-size: 11px; color: var(--text2); margin-bottom: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: .3px; }
+  .stat-val { font-size: 22px; font-weight: 600; }
+
+  /* PRODUCT CARDS */
+  .prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .prod-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .prod-emoji { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 38px; }
+  .prod-info { padding: 10px 12px; }
+  .prod-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .prod-brand { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+  .prod-footer { display: flex; justify-content: space-between; align-items: center; }
+  .prod-price { font-size: 14px; font-weight: 600; color: var(--purple-text); }
+  .badge { font-size: 11px; padding: 2px 7px; border-radius: 99px; font-weight: 500; }
+  .b-ok { background: var(--green-bg); color: var(--green); }
+  .b-low { background: var(--amber-bg); color: var(--amber); }
+  .b-out { background: var(--red-bg); color: var(--red); }
+
+  /* CLIENT CARDS */
+  .client-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); }
+  .client-hdr { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+  .client-hdr:hover { background: var(--bg); }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--purple-bg); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--purple-text); flex-shrink: 0; }
+  .client-meta { flex: 1; min-width: 0; }
+  .client-name { font-size: 14px; font-weight: 600; }
+  .client-sub { font-size: 12px; color: var(--text2); }
+  .client-body { border-top: 1px solid var(--border); padding: 12px 14px; display: none; }
+  .client-body.open { display: block; }
+  .vtable { width: 100%; font-size: 12px; border-collapse: collapse; margin-bottom: 10px; }
+  .vtable th { color: var(--text2); font-weight: 500; padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--border); }
+  .vtable td { padding: 5px 6px; border-bottom: 1px solid var(--border); }
+  .vtable tr:last-child td { border-bottom: none; }
+  .debt-total { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); margin-bottom: 10px; }
+
+  /* SEARCH */
+  .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .search-row input { flex: 1; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { padding: 5px 12px; border-radius: 99px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; background: transparent; color: var(--text2); font-weight: 500; }
+  .chip.active { background: var(--purple-bg); border-color: #AFA9EC; color: var(--purple-text); }
+
+  /* PROD PREVIEW */
+  .prod-preview { background: var(--purple-bg); border-radius: var(--radius-sm); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; display: none; }
+  .prod-preview.show { display: flex; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1A1916; color: #FAF9F6; padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 999; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  /* WHATSAPP PREVIEW */
+  .wa-preview { background: #ECE5DD; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; }
+  .wa-bubble { background: #fff; border-radius: 8px 8px 2px 8px; padding: 10px 13px; font-size: 13px; line-height: 1.6; color: #111; white-space: pre-wrap; word-break: break-word; max-width: 90%; margin-left: auto; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+  .wa-time { font-size: 11px; color: #888; text-align: right; margin-top: 4px; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 2rem; color: var(--text2); font-size: 14px; }
+
+  /* PHOTO ZONE */
+  .photo-zone { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 1.5rem; text-align: center; cursor: pointer; background: var(--bg); color: var(--text2); font-size: 13px; margin-bottom: 10px; }
+  .photo-zone.done { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+
+  /* CONFIG */
+  .config-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .config-row label { min-width: 120px; font-size: 13px; color: var(--text2); }
+  .config-row input { flex: 1; }
+  .config-status { font-size: 12px; padding: 6px 12px; border-radius: var(--radius-sm); margin-top: 8px; }
+  .config-ok { background: var(--green-bg); color: var(--green); }
+  .config-err { background: var(--red-bg); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" role="navigation" aria-label="Menú principal">
+  <button class="nav-btn active" onclick="go('ventas')" aria-current="page">🛍️ Nueva venta</button>
+  <button class="nav-btn" onclick="go('clientes')">👥 Clientes</button>
+  <button class="nav-btn" onclick="go('inventario')">🌸 Inventario</button>
+  <button class="nav-btn" onclick="go('agregar')">➕ Agregar</button>
+  <button class="nav-btn" onclick="go('config')">⚙️ Config</button>
+</nav>
+
+<!-- SYNC BAR -->
+<div class="sync-bar" role="status" aria-live="polite">
+  <div id="syncPill" class="sync-pill sync-online" onclick="manualSync()" title="Estado de sincronización">
+    <span class="sync-dot dot-green" id="syncDot"></span>
+    <span id="syncText">Sincronizado</span>
+    <span id="syncIcon" style="font-size:13px">↻</span>
+  </div>
+  <span id="pendingBadge" style="display:none" class="pending-badge">0 pendientes</span>
+</div>
+
+<!-- ============ SECCIÓN: NUEVA VENTA ============ -->
+<section id="ventas" class="sec on" aria-label="Registrar nueva venta">
+  <div class="card">
+    <p class="card-title">Registrar venta / deuda</p>
+    <div class="grid2" style="margin-bottom:10px">
+      <div class="field full">
+        <label>Cliente *</label>
+        <select id="vCliente">
+          <option value="">Seleccionar cliente existente...</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>O escribe un cliente nuevo</label>
+        <input type="text" id="vNuevoCliente" placeholder="Nombre completo">
+      </div>
+      <div class="field full">
+        <label>Teléfono del cliente (para WhatsApp)</label>
+        <input type="tel" id="vTelefono" placeholder="+52 800 000 0000">
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-bottom:10px">
+      <div class="field full">
+        <label>Perfume *</label>
+        <select id="vProducto" onchange="onProdSelect()">
+          <option value="">— Seleccionar perfume —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Cantidad</label>
+        <input type="number" id="vCantidad" value="1" min="1" oninput="calcTotal()">
+      </div>
+      <div class="field">
+        <label>Precio unitario ($)</label>
+        <input type="number" id="vPrecio" placeholder="0.00" oninput="calcTotal()">
+      </div>
+    </div>
+
+    <div id="prodPreview" class="prod-preview">
+      <span id="prevName" style="font-size:13px;font-weight:600;color:var(--purple-text)"></span>
+      <span id="prevPrice" style="font-size:13px;color:var(--purple)"></span>
+    </div>
+
+    <div class="grid2" style="margin-bottom:10px">
+      <div class="field">
+        <label>Total a pagar ($)</label>
+        <input type="number" id="vTotal" readonly style="background:var(--purple-bg);color:var(--purple-text);font-weight:600">
+      </div>
+      <div class="field">
+        <label>Anticipo / abono ($)</label>
+        <input type="number" id="vAnticipo" value="0" placeholder="0.00">
+      </div>
+      <div class="field full">
+        <label>Nota</label>
+        <input type="text" id="vNota" placeholder="Ej. entrega el martes...">
+      </div>
+    </div>
+
+    <button class="btn btn-purple btn-block" onclick="registrarVenta()">💾 Registrar venta</button>
+  </div>
+</section>
+
+<!-- ============ SECCIÓN: CLIENTES ============ -->
+<section id="clientes" class="sec" aria-label="Lista de clientes y deudas">
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Clientes</div><div class="stat-val" id="sTotal">0</div></div>
+    <div class="stat"><div class="stat-lbl">Total deuda</div><div class="stat-val" id="sDeuda" style="color:var(--red)">$0</div></div>
+    <div class="stat"><div class="stat-lbl">Cobrado hoy</div><div class="stat-val" id="sCobrado" style="color:var(--green)">$0</div></div>
+  </div>
+  <div class="search-row">
+    <input type="text" id="buscarCliente" placeholder="🔍 Buscar cliente..." oninput="renderClientes()">
+  </div>
+  <div id="clientesList"></div>
+</section>
+
+<!-- ============ SECCIÓN: INVENTARIO ============ -->
+<section id="inventario" class="sec" aria-label="Inventario de perfumes">
+  <div class="search-row">
+    <input type="text" id="buscarProd" placeholder="🔍 Buscar perfume..." oninput="renderInventario()">
+    <select onchange="renderInventario()" id="sortInv" style="width:140px">
+      <option value="nombre">A-Z</option>
+      <option value="precio">Precio</option>
+      <option value="stock">Stock</option>
+    </select>
+  </div>
+  <div class="chips" id="famChips">
+    <button class="chip active" onclick="setFam(this,'')">Todos</button>
+    <button class="chip" onclick="setFam(this,'Floral')">🌸 Floral</button>
+    <button class="chip" onclick="setFam(this,'Amaderado')">🌿 Amaderado</button>
+    <button class="chip" onclick="setFam(this,'Oriental')">✨ Oriental</button>
+    <button class="chip" onclick="setFam(this,'Fresco')">💧 Fresco</button>
+    <button class="chip" onclick="setFam(this,'Cítrico')">🍋 Cítrico</button>
+    <button class="chip" onclick="setFam(this,'Gourmand')">🍯 Gourmand</button>
+  </div>
+  <div class="prod-grid" id="invGrid"></div>
+</section>
+
+<!-- ============ SECCIÓN: AGREGAR PERFUME ============ -->
+<section id="agregar" class="sec" aria-label="Agregar perfume al inventario">
+  <div class="card">
+    <p class="card-title">Agregar perfume al inventario</p>
+    <div class="photo-zone" id="photoZone" onclick="fakePhoto()" role="button" tabindex="0" aria-label="Tomar o subir foto del perfume">
+      📷 Toca para tomar foto o subir imagen
+    </div>
+    <div class="grid2">
+      <div class="field full"><label>Nombre *</label><input type="text" id="aNombre" placeholder="Ej. Black Orchid"></div>
+      <div class="field"><label>Marca</label><input type="text" id="aMarca" placeholder="Ej. Tom Ford"></div>
+      <div class="field"><label>ml</label><input type="text" id="aMl" placeholder="Ej. 100ml"></div>
+      <div class="field"><label>Precio venta ($)</label><input type="number" id="aPrecio" placeholder="0.00"></div>
+      <div class="field"><label>Costo ($)</label><input type="number" id="aCosto" placeholder="0.00"></div>
+      <div class="field"><label>Stock inicial</label><input type="number" id="aStock" placeholder="0"></div>
+      <div class="field">
+        <label>Familia olfativa</label>
+        <select id="aFamilia">
+          <option value="">Sin clasificar</option>
+          <option>Floral</option><option>Amaderado</option><option>Oriental</option>
+          <option>Fresco</option><option>Cítrico</option><option>Gourmand</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Género</label>
+        <select id="aGenero">
+          <option value="">Sin especificar</option>
+          <option>Femenino</option><option>Masculino</option><option>Unisex</option>
+        </select>
+      </div>
+      <div class="field full"><label>Notas / descripción</label><textarea id="aDesc" placeholder="Notas de salida, corazón, fondo..."></textarea></div>
+    </div>
+    <br>
+    <button class="btn btn-purple btn-block" onclick="agregarPerfume()">💾 Guardar perfume</button>
+  </div>
+</section>
+
+<!-- ============ SECCIÓN: CONFIGURACIÓN ============ -->
+<section id="config" class="sec" aria-label="Configuración de la aplicación">
+  <div class="card">
+    <p class="card-title">⚙️ Configuración de Google Sheets</p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Pega aquí la URL de tu Google Apps Script para activar la sincronización en la nube.</p>
+    <div class="field" style="margin-bottom:10px">
+      <label>URL de Apps Script</label>
+      <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." value="">
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Nombre de tu tienda</label>
+      <input type="text" id="storeName" placeholder="Ej. Perfumes Rosario" value="Mi Tienda de Perfumes">
+    </div>
+    <button class="btn btn-purple" onclick="guardarConfig()" style="margin-right:8px">💾 Guardar</button>
+    <button class="btn" onclick="testConnection()">🔗 Probar conexión</button>
+    <div id="configStatus"></div>
+  </div>
+  <div class="card">
+    <p class="card-title">📊 Datos locales</p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Los datos se guardan en este dispositivo aunque no haya internet.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-green" onclick="exportarJSON()">⬇️ Exportar datos</button>
+      <button class="btn btn-red" onclick="borrarTodo()">🗑️ Borrar todo</button>
+    </div>
+  </div>
+</section>
+
+<!-- TOAST GLOBAL -->
+<div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+<script>
+/* =========================================================
+   ESTADO GLOBAL
+   ========================================================= */
+let products = JSON.parse(localStorage.getItem('pf_products') || '[]');
+let clients  = JSON.parse(localStorage.getItem('pf_clients')  || '[]');
+let queue    = JSON.parse(localStorage.getItem('pf_queue')    || '[]');
+let cobradoHoy = 0;
+let nextPId = (products.reduce((m,p)=>Math.max(m,p.id),0) || 0) + 1;
+let nextCId = (clients.reduce((m,c)=>Math.max(m,c.id),0)  || 0) + 1;
+let activeFam = '';
+let isSyncing = false;
+let isOnline  = navigator.onLine;
+let SCRIPT_URL = localStorage.getItem('pf_script_url') || '';
+let STORE_NAME = localStorage.getItem('pf_store_name') || 'Mi Tienda de Perfumes';
+
+/* Datos de ejemplo si no hay nada guardado */
+if (!products.length) {
+  products = [
+    {id:1,nombre:'La Vie Est Belle',marca:'Lancôme',precio:1850,costo:900,stock:8,ml:'50ml',familia:'Floral',genero:'Femenino',desc:'Iris, pralinée, vainilla',emoji:'🌸',bg:'#FBEAF0'},
+    {id:2,nombre:'Sauvage',marca:'Dior',precio:2200,costo:1100,stock:3,ml:'100ml',familia:'Amaderado',genero:'Masculino',desc:'Bergamota, ambroxan, cedro',emoji:'🌿',bg:'#E1F5EE'},
+    {id:3,nombre:'Black Orchid',marca:'Tom Ford',precio:3100,costo:1600,stock:0,ml:'50ml',familia:'Oriental',genero:'Unisex',desc:'Orquídea negra, trufa, patchouli',emoji:'🖤',bg:'#EEEDFE'},
+    {id:4,nombre:'Light Blue',marca:'D&G',precio:1400,costo:700,stock:12,ml:'100ml',familia:'Fresco',genero:'Femenino',desc:'Limón siciliano, manzana, cedro',emoji:'💧',bg:'#E6F1FB'},
+  ];
+  save();
+}
+
+const EMOJIS = ['🌸','🌿','💜','💧','✨','🧡','🌺','🖤','🍋','🌙','🪷','🌊'];
+const BGS    = ['#FBEAF0','#E1F5EE','#EEEDFE','#E6F1FB','#FAEEDA','#EAF3DE','#F2E8FF'];
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+function save() {
+  localStorage.setItem('pf_products', JSON.stringify(products));
+  localStorage.setItem('pf_clients',  JSON.stringify(clients));
+}
+function saveQueue() { localStorage.setItem('pf_queue', JSON.stringify(queue)); }
+
+function toast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function fmt(n) { return '$' + (n||0).toLocaleString('es-MX'); }
+function today() { return new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}); }
+
+/* =========================================================
+   NAVEGACIÓN
+   ========================================================= */
+function go(id) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('on');
+  const tabs = ['ventas','clientes','inventario','agregar','config'];
+  document.querySelectorAll('.nav-btn')[tabs.indexOf(id)].classList.add('active');
+  if (id === 'clientes')   renderClientes();
+  if (id === 'inventario') renderInventario();
+  if (id === 'config')     loadConfig();
+}
+
+/* =========================================================
+   SYNC / OFFLINE
+   ========================================================= */
+window.addEventListener('online',  () => { isOnline = true;  updateSyncPill(); if(queue.length) autoSync(); });
+window.addEventListener('offline', () => { isOnline = false; updateSyncPill(); });
+
+function updateSyncPill() {
+  const pill = document.getElementById('syncPill');
+  const dot  = document.getElementById('syncDot');
+  const txt  = document.getElementById('syncText');
+  const ico  = document.getElementById('syncIcon');
+  const badge = document.getElementById('pendingBadge');
+
+  pill.className = 'sync-pill';
+  dot.className  = 'sync-dot';
+  ico.className  = '';
+
+  if (isSyncing) {
+    pill.classList.add('sync-syncing');
+    dot.classList.add('dot-blue','pulse-dot');
+    txt.textContent = 'Sincronizando...';
+    ico.style.display = 'inline';
+    ico.className = 'spin';
+    ico.textContent = '↻';
+  } else if (!isOnline) {
+    pill.classList.add('sync-offline');
+    dot.classList.add('dot-amber','pulse-dot');
+    txt.textContent = 'Sin internet';
+  } else if (queue.length) {
+    pill.classList.add('sync-syncing');
+    dot.classList.add('dot-blue');
+    txt.textContent = queue.length + ' pendiente(s)';
+  } else {
+    pill.classList.add('sync-online');
+    dot.classList.add('dot-green');
+    txt.textContent = 'Sincronizado';
+  }
+
+  badge.style.display = queue.length ? 'inline' : 'none';
+  badge.textContent = queue.length + ' pendiente' + (queue.length !== 1 ? 's' : '');
+}
+
+function addToQueue(action, data) {
+  queue.push({ action, data, ts: Date.now() });
+  saveQueue();
+  updateSyncPill();
+  if (isOnline) setTimeout(autoSync, 800);
+}
+
+async function autoSync() {
+  if (!SCRIPT_URL || isSyncing || !queue.length || !isOnline) return;
+  isSyncing = true;
+  updateSyncPill();
+  const toSync = [...queue];
+  try {
+    for (const item of toSync) {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(item)
+      });
+    }
+    queue = [];
+    saveQueue();
+    toast('✅ ' + toSync.length + ' cambio(s) sincronizados');
+  } catch(e) {
+    toast('⚠️ Error al sincronizar, se reintentará luego');
+  }
+  isSyncing = false;
+  updateSyncPill();
+}
+
+function manualSync() { if(isOnline && queue.length) autoSync(); }
+
+/* =========================================================
+   SELECTORES (poblar los <select>)
+   ========================================================= */
+function populateSelects() {
+  const ps = document.getElementById('vProducto');
+  const vc = document.getElementById('vCliente');
+  const curP = ps.value, curC = vc.value;
+
+  ps.innerHTML = '<option value="">— Seleccionar perfume —</option>';
+  products.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.emoji + ' ' + p.nombre + ' · ' + p.marca + ' (' + fmt(p.precio) + ')' + (p.stock === 0 ? ' [sin stock]' : '');
+    ps.appendChild(o);
+  });
+
+  vc.innerHTML = '<option value="">Seleccionar cliente existente...</option>';
+  clients.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.id;
+    o.textContent = c.nombre + (c.telefono ? ' · ' + c.telefono : '');
+    vc.appendChild(o);
+  });
+
+  if (curP) ps.value = curP;
+  if (curC) vc.value = curC;
+}
+
+/* =========================================================
+   NUEVA VENTA
+   ========================================================= */
+function onProdSelect() {
+  const id = parseInt(document.getElementById('vProducto').value);
+  const p  = products.find(x => x.id === id);
+  const pp = document.getElementById('prodPreview');
+  if (p) {
+    document.getElementById('vPrecio').value = p.precio;
+    document.getElementById('prevName').textContent  = p.emoji + ' ' + p.nombre + ' · ' + p.ml;
+    document.getElementById('prevPrice').textContent = fmt(p.precio) + ' c/u';
+    pp.classList.add('show');
+    calcTotal();
+  } else {
+    pp.classList.remove('show');
+    document.getElementById('vPrecio').value = '';
+    document.getElementById('vTotal').value  = '';
+  }
+}
+
+function calcTotal() {
+  const precio = parseFloat(document.getElementById('vPrecio').value) || 0;
+  const cant   = parseInt(document.getElementById('vCantidad').value) || 1;
+  document.getElementById('vTotal').value = (precio * cant).toFixed(2);
+}
+
+function registrarVenta() {
+  const clienteId = parseInt(document.getElementById('vCliente').value);
+  const nuevoNom  = document.getElementById('vNuevoCliente').value.trim();
+  const telefono  = document.getElementById('vTelefono').value.trim();
+  const prodId    = parseInt(document.getElementById('vProducto').value);
+  const precio    = parseFloat(document.getElementById('vPrecio').value) || 0;
+  const cant      = parseInt(document.getElementById('vCantidad').value) || 1;
+  const anticipo  = parseFloat(document.getElementById('vAnticipo').value) || 0;
+  const nota      = document.getElementById('vNota').value.trim();
+
+  if (!prodId)                       { toast('⚠️ Selecciona un perfume'); return; }
+  if (!clienteId && !nuevoNom)       { toast('⚠️ Indica el nombre del cliente'); return; }
+
+  const prod      = products.find(p => p.id === prodId);
+  const total     = precio * cant;
+  const pendiente = Math.max(total - anticipo, 0);
+
+  let cid = clienteId;
+  if (!clienteId && nuevoNom) {
+    const nc = { id: nextCId++, nombre: nuevoNom, telefono, ventas: [], totalDeuda: 0 };
+    clients.push(nc);
+    cid = nc.id;
+  } else if (clienteId && telefono) {
+    const c = clients.find(x => x.id === clienteId);
+    if (c && !c.telefono) c.telefono = telefono;
+  }
+
+  const cliente = clients.find(c => c.id === cid);
+  const venta   = { id: Date.now(), fecha: today(), producto: prod.nombre, emoji: prod.emoji, cantidad: cant, total, anticipo, pendiente, nota, abonos: [] };
+  cliente.ventas.push(venta);
+  cliente.totalDeuda = (cliente.totalDeuda || 0) + pendiente;
+  cobradoHoy += anticipo;
+
+  if (prod.stock > 0) prod.stock = Math.max(prod.stock - cant, 0);
+
+  save();
+  addToQueue('venta', { clienteId: cid, ...venta });
+
+  ['vNuevoCliente','vTelefono','vNota'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('vCliente').value  = '';
+  document.getElementById('vProducto').value = '';
+  document.getElementById('vCantidad').value = 1;
+  document.getElementById('vAnticipo').value = 0;
+  document.getElementById('vPrecio').value   = '';
+  document.getElementById('vTotal').value    = '';
+  document.getElementById('prodPreview').classList.remove('show');
+  populateSelects();
+
+  toast(pendiente > 0
+    ? '✅ Venta registrada — queda ' + fmt(pendiente) + ' pendiente'
+    : '✅ Venta registrada — pagado completo');
+}
+
+/* =========================================================
+   CLIENTES
+   ========================================================= */
+let abonoTarget = {};
+
+function renderClientes() {
+  const q    = (document.getElementById('buscarCliente').value || '').toLowerCase();
+  const list = clients.filter(c => c.nombre.toLowerCase().includes(q));
+  const totalDeuda = clients.reduce((s,c) => s + (c.totalDeuda || 0), 0);
+
+  document.getElementById('sTotal').textContent  = clients.length;
+  document.getElementById('sDeuda').textContent  = fmt(totalDeuda);
+  document.getElementById('sCobrado').textContent = fmt(cobradoHoy);
+
+  const cont = document.getElementById('clientesList');
+  if (!list.length) { cont.innerHTML = '<div class="empty">Sin clientes aún.<br>Registra una venta para agregar uno.</div>'; return; }
+
+  cont.innerHTML = list.map(c => `
+    <div class="client-card">
+      <div class="client-hdr" onclick="toggleCliente(${c.id})" role="button" aria-expanded="false">
+        <div class="avatar">${c.nombre.slice(0,2).toUpperCase()}</div>
+        <div class="client-meta">
+          <div class="client-name">${c.nombre}</div>
+          <div class="client-sub">${c.telefono || 'Sin teléfono'} · ${c.ventas.length} venta(s)</div>
+        </div>
+        <span class="badge ${(c.totalDeuda||0)>0?'b-out':'b-ok'}">
+          ${(c.totalDeuda||0)>0 ? fmt(c.totalDeuda) : 'Al corriente'}
+        </span>
+      </div>
+      <div class="client-body" id="cb-${c.id}">
+        ${c.ventas.length ? `
+        <table class="vtable">
+          <thead><tr><th>Fecha</th><th>Perfume</th><th>Cant</th><th>Total</th><th>Pagado</th><th>Resta</th><th></th></tr></thead>
+          <tbody>${c.ventas.map((v,vi) => `
+            <tr>
+              <td style="color:var(--text2);white-space:nowrap">${v.fecha}</td>
+              <td>${v.emoji||''} ${v.producto}</td>
+              <td>${v.cantidad}</td>
+              <td>${fmt(v.total)}</td>
+              <td style="color:var(--green)">${fmt((v.anticipo||0)+v.abonos.reduce((s,a)=>s+a,0))}</td>
+              <td style="color:${v.pendiente>0?'var(--red)':'var(--green)'};font-weight:600">${v.pendiente>0?fmt(v.pendiente):'✓'}</td>
+              <td>${v.pendiente>0?`<button class="btn btn-green btn-sm" onclick="mostrarAbono(${c.id},${vi})">Abonar</button>`:''}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>` : '<p style="color:var(--text2);font-size:13px;margin-bottom:10px">Sin ventas registradas.</p>'}
+
+        <div id="abono-form-${c.id}" style="display:none;gap:8px;margin-bottom:10px;flex-wrap:wrap" class="abono-row">
+          <input type="number" id="abono-amt-${c.id}" placeholder="Monto del abono" style="max-width:160px">
+          <button class="btn btn-green btn-sm" onclick="procesarAbono(${c.id})">✓ Confirmar</button>
+          <button class="btn btn-sm" onclick="document.getElementById('abono-form-${c.id}').style.display='none'">Cancelar</button>
+        </div>
+
+        <div class="debt-total">
+          <span style="font-size:13px;color:var(--text2)">Total pendiente</span>
+          <span style="font-size:16px;font-weight:700;color:var(--red)">${fmt(c.totalDeuda||0)}</span>
+        </div>
+
+        ${(c.totalDeuda||0) > 0 ? `
+        <div style="margin-bottom:10px">
+          <div class="wa-preview">
+            <div class="wa-bubble" id="wa-msg-${c.id}">${generarMsgWA(c)}</div>
+            <div class="wa-time">ahora ✓✓</div>
+          </div>
+        </div>
+        <button class="btn btn-wa" onclick="enviarWA(${c.id})">
+          📲 Enviar recordatorio por WhatsApp
+        </button>
+        <button class="btn btn-sm btn-block" style="margin-top:8px" onclick="copiarMsgWA(${c.id})">
+          📋 Copiar mensaje
+        </button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function toggleCliente(id) {
+  const b = document.getElementById('cb-' + id);
+  b.classList.toggle('open');
+}
+
+function mostrarAbono(cid, vi) {
+  abonoTarget[cid] = vi;
+  const f = document.getElementById('abono-form-' + cid);
+  f.style.display = 'flex';
+  document.getElementById('abono-amt-' + cid).focus();
+}
+
+function procesarAbono(cid) {
+  const amt = parseFloat(document.getElementById('abono-amt-' + cid).value) || 0;
+  if (!amt || amt <= 0) { toast('⚠️ Ingresa un monto válido'); return; }
+  const c  = clients.find(x => x.id === cid);
+  const vi = abonoTarget[cid];
+  const v  = c.ventas[vi];
+  const real = Math.min(amt, v.pendiente);
+  v.pendiente -= real;
+  v.abonos.push(real);
+  c.totalDeuda = Math.max((c.totalDeuda || 0) - real, 0);
+  cobradoHoy += real;
+  save();
+  addToQueue('abono', { clienteId: cid, ventaId: v.id, monto: real, fecha: today() });
+  toast('✅ Abono de ' + fmt(real) + ' registrado');
+  renderClientes();
+  setTimeout(() => {
+    const b = document.getElementById('cb-' + cid);
+    if (b) b.classList.add('open');
+  }, 50);
+}
+
+function generarMsgWA(c) {
+  const pendientes = c.ventas.filter(v => v.pendiente > 0);
+  const detalle    = pendientes.map(v => `• ${v.producto}: ${fmt(v.pendiente)}`).join('\n');
+  return `Hola ${c.nombre}! 👋\n\nTe mando un recordatorio de tu saldo pendiente en ${STORE_NAME}:\n\n${detalle}\n\n💰 *Total: ${fmt(c.totalDeuda)} MXN*\n\nCualquier duda aquí estoy. ¡Gracias! 🌸`;
+}
+
+function enviarWA(cid) {
+  const c = clients.find(x => x.id === cid);
+  if (!c.telefono) { toast('⚠️ Este cliente no tiene teléfono registrado'); return; }
+  const num = c.telefono.replace(/[^0-9]/g, '');
+  const msg = encodeURIComponent(generarMsgWA(c));
+  window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+}
+
+function copiarMsgWA(cid) {
+  const c = clients.find(x => x.id === cid);
+  navigator.clipboard.writeText(generarMsgWA(c))
+    .then(() => toast('📋 Mensaje copiado'))
+    .catch(() => toast('⚠️ No se pudo copiar'));
+}
+
+/* =========================================================
+   INVENTARIO
+   ========================================================= */
+function setFam(el, fam) {
+  document.querySelectorAll('.chips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  activeFam = fam;
+  renderInventario();
+}
+
+function renderInventario() {
+  const q    = (document.getElementById('buscarProd').value || '').toLowerCase();
+  const sort = document.getElementById('sortInv').value;
+  let list   = products.filter(p => {
+    const mq = !q || p.nombre.toLowerCase().includes(q) || p.marca.toLowerCase().includes(q);
+    const mf = !activeFam || p.familia === activeFam;
+    return mq && mf;
+  });
+  if (sort === 'precio') list.sort((a,b) => a.precio - b.precio);
+  else if (sort === 'stock') list.sort((a,b) => b.stock - a.stock);
+  else list.sort((a,b) => a.nombre.localeCompare(b.nombre));
+
+  const g = document.getElementById('invGrid');
+  if (!list.length) { g.innerHTML = '<div class="empty">No se encontraron perfumes.</div>'; return; }
+  g.innerHTML = list.map(p => `
+    <div class="prod-card">
+      <div class="prod-emoji" style="background:${p.bg||'#EEEDFE'}">${p.emoji||'🌸'}</div>
+      <div class="prod-info">
+        <div class="prod-name">${p.nombre}</div>
+        <div class="prod-brand">${p.marca} · ${p.ml}</div>
+        <div class="prod-footer">
+          <span class="prod-price">${fmt(p.precio)}</span>
+          <span class="badge ${p.stock===0?'b-out':p.stock<=3?'b-low':'b-ok'}">
+            ${p.stock===0?'Agotado':p.stock+' uds'}
+          </span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* =========================================================
+   AGREGAR PERFUME
+   ========================================================= */
+function fakePhoto() {
+  const z = document.getElementById('photoZone');
+  z.textContent = '✅ Imagen lista — toca para cambiar';
+  z.classList.add('done');
+}
+
+function agregarPerfume() {
+  const nombre = document.getElementById('aNombre').value.trim();
+  if (!nombre) { toast('⚠️ Escribe el nombre del perfume'); return; }
+  const p = {
+    id: nextPId++,
+    nombre,
+    marca:   document.getElementById('aMarca').value.trim() || 'Sin marca',
+    precio:  parseFloat(document.getElementById('aPrecio').value) || 0,
+    costo:   parseFloat(document.getElementById('aCosto').value)  || 0,
+    stock:   parseInt(document.getElementById('aStock').value)    || 0,
+    ml:      document.getElementById('aMl').value.trim()          || '—',
+    familia: document.getElementById('aFamilia').value            || 'Sin clasificar',
+    genero:  document.getElementById('aGenero').value             || '—',
+    desc:    document.getElementById('aDesc').value.trim(),
+    emoji:   EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
+    bg:      BGS[Math.floor(Math.random() * BGS.length)],
+  };
+  products.push(p);
+  save();
+  addToQueue('producto', p);
+
+  ['aNombre','aMarca','aPrecio','aCosto','aStock','aMl','aDesc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('aFamilia').value = '';
+  document.getElementById('aGenero').value  = '';
+  const z = document.getElementById('photoZone');
+  z.textContent = '📷 Toca para tomar foto o subir imagen';
+  z.classList.remove('done');
+
+  populateSelects();
+  toast('✅ Perfume agregado al inventario');
+}
+
+/* =========================================================
+   CONFIGURACIÓN
+   ========================================================= */
+function loadConfig() {
+  document.getElementById('scriptUrl').value = localStorage.getItem('pf_script_url') || '';
+  document.getElementById('storeName').value = localStorage.getItem('pf_store_name') || 'Mi Tienda de Perfumes';
+}
+
+function guardarConfig() {
+  SCRIPT_URL = document.getElementById('scriptUrl').value.trim();
+  STORE_NAME = document.getElementById('storeName').value.trim() || 'Mi Tienda de Perfumes';
+  localStorage.setItem('pf_script_url', SCRIPT_URL);
+  localStorage.setItem('pf_store_name', STORE_NAME);
+  toast('✅ Configuración guardada');
+}
+
+async function testConnection() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  const st  = document.getElementById('configStatus');
+  if (!url) { st.className = 'config-status config-err'; st.textContent = '⚠️ Ingresa la URL primero'; return; }
+  st.className = 'config-status'; st.textContent = '🔄 Probando conexión...';
+  try {
+    const r = await fetch(url + '?test=1');
+    if (r.ok) { st.className = 'config-status config-ok'; st.textContent = '✅ Conexión exitosa con Google Sheets'; }
+    else throw new Error();
+  } catch {
+    st.className = 'config-status config-err';
+    st.textContent = '❌ No se pudo conectar. Revisa la URL y los permisos del script.';
+  }
+}
+
+function exportarJSON() {
+  const data = { products, clients, exportado: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'perfumes-backup-' + new Date().toLocaleDateString('es-MX').replace(/\//g,'-') + '.json';
+  a.click();
+}
+
+function borrarTodo() {
+  if (!confirm('¿Seguro que quieres borrar TODOS los datos? Esta acción no se puede deshacer.')) return;
+  localStorage.clear();
+  location.reload();
+}
+
+/* =========================================================
+   ARRANQUE
+   ========================================================= */
+populateSelects();
+updateSyncPill();
+setInterval(() => { if(isOnline && queue.length && !isSyncing) autoSync(); }, 30000);
+</script>
+</body>
+</html>
